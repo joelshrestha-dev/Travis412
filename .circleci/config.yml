@@ -9,24 +9,29 @@ jobs:
       # Run Maven tests
       - run:
           name: "Run Maven tests"
-          command: mvn clean test
-      # Push to main branch if tests pass
+          command: |
+            mvn clean test
+
+      # Only run the push if tests passed
       - run:
           name: "Merge circleci-project-setup into main and push"
           command: |
+            echo "Tests passed, merging into main..."
             git config --global user.email "jolethetrole@gmail.com"
             git config --global user.name "joelshrestha-dev"
             git remote set-url origin https://$GH_TOKEN@github.com/joelshrestha-dev/Travis412.git
             git checkout main
             git merge circleci-project-setup
             git push origin main
-      # Notify via email if tests fail
+          # This step will only run if the previous step passed
+          when: on_success
+
+      # Optional: email notification if tests fail
       - run:
           name: "Notify if tests fail"
           command: |
-            if [ $? -ne 0 ]; then
-              echo "CircleCI Build Failed" | mail -s "CircleCI Build Failed" jolethetrole@gmail.com
-            fi
+            echo "CircleCI Build Failed" | mail -s "CircleCI Build Failed" jolethetrole@gmail.com
+          when: on_fail
 
 workflows:
   build-and-deploy:
